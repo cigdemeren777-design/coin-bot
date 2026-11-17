@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1220"><title>Coin Tarayıcı AI | Mobil Panel</title>
+<style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1220;color:#e7eefb;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:760px;margin:auto;padding:20px 16px 70px}header{display:flex;justify-content:space-between;align-items:center}h1{font-size:24px;margin:12px 0 4px}h2{font-size:17px;margin:0 0 14px}.muted{color:#95a4ba;font-size:13px}.pill{padding:7px 10px;border-radius:30px;background:#253348;font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{background:#141f31;border:1px solid #2a3951;border-radius:17px;padding:17px;margin-top:14px}.price{font-size:24px;font-weight:750;margin:12px 0 5px;overflow-wrap:anywhere}.positive{color:#54d9a3}.negative{color:#ff8c95}button{border:0;border-radius:10px;background:#3865e9;color:white;padding:11px 16px;font-weight:700;cursor:pointer}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.notice{border-left:3px solid #e3b04c;padding-left:12px;line-height:1.6}.status{font-size:12px;color:#aab9cc}a{color:#a5c6ff}footer{margin-top:24px;color:#95a4ba;font-size:12px;line-height:1.6}</style></head>
+<body><main><header><div><div class="muted">COIN TARAYICI AI V2</div><h1>Mobil Piyasa Paneli</h1></div><span class="pill">Spot • İzleme</span></header>
+<p class="muted">Safari uyumlu • Gerçek emir yok • Yalnızca piyasa bilgisi</p>
+<div class="grid"><section class="card"><div class="muted">BTC / USDT</div><div id="btc" class="price">—</div><div id="btcChange" class="status">Veri bekleniyor</div></section><section class="card"><div class="muted">ETH / USDT</div><div id="eth" class="price">—</div><div id="ethChange" class="status">Veri bekleniyor</div></section></div>
+<section class="card"><div class="row"><h2>Veri bağlantısı</h2><button id="refresh">Yenile</button></div><div id="state" class="status">Henüz kontrol edilmedi.</div><p class="muted">Fiyatlar erişilebilirse Binance herkese açık 24 saatlik fiyat API'sinden alınır. Otomatik güncelleme: 30 saniye.</p></section>
+<section class="card"><h2>Yapay zekâ sinyalleri</h2><p class="notice">Canlı model sunucusu bu sayfaya bağlı değil. Bu nedenle doğrulanmamış AL/SAT sinyali veya kâr oranı gösterilmiyor.</p><div class="muted">Model eğitimi, ileri test ve otomatik sanal işlemler için ayrı çalışan Python sunucusu gereklidir.</div></section>
+<section class="card"><h2>Sanal portföy</h2><div class="row"><span class="muted">Sunucu bağlantısı</span><span class="pill">Bağlı değil</span></div><p class="muted">Bu statik sayfa işlem yapmaz; gerçek veya sanal emir göndermez.</p></section>
+<footer><p>Veriler gecikebilir veya bağlantı engeli nedeniyle hiç yüklenmeyebilir. Finansal tavsiye değildir.</p><a href="../">Ana projeye dön</a></footer></main>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:2,minimumFractionDigits:2}).format(n);
+async function refresh(){
+$('state').textContent='Fiyatlar alınıyor…';
+try{
+const response=await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=%5B%22BTCUSDT%22%2C%22ETHUSDT%22%5D',{cache:'no-store'});
+if(!response.ok)throw new Error('HTTP '+response.status);
+const data=await response.json();
+if(!Array.isArray(data))throw new Error('Beklenmeyen yanıt');
+for(const [sym,id] of [['BTCUSDT','btc'],['ETHUSDT','eth']]){
+const item=data.find(x=>x.symbol===sym);
+if(!item||!Number.isFinite(Number(item.lastPrice)))throw new Error(sym+' verisi eksik');
+$(id).textContent='$'+fmt(Number(item.lastPrice));
+const change=Number(item.priceChangePercent);
+$(id+'Change').textContent=(change>=0?'+':'')+fmt(change)+'% • son 24 saat';
+$(id+'Change').className='status '+(change>=0?'positive':'negative');
+}
+$('state').textContent='Son güncelleme: '+new Date().toLocaleTimeString('tr-TR')+' • Binance API';
+}catch(err){$('state').textContent='Veri alınamadı: '+err.message+'. Safari ağ erişimini veya API engelini kontrol et.';}
+}
+$('refresh').addEventListener('click',refresh);
+refresh();setInterval(()=>{if(!document.hidden)refresh()},30000);
+</script></body></html>
