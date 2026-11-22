@@ -1,0 +1,32 @@
+name: Hourly Paper Coin Bot
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "12 * * * *"
+permissions:
+  contents: write
+concurrency:
+  group: paper-coin-bot
+  cancel-in-progress: false
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run paper bot (no API keys or orders)
+        run: python paper_bot.py
+      - name: Commit state only if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add panel/bot_state.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update hourly paper trading state"
+            git push
+          fi
